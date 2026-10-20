@@ -1,0 +1,697 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Agenda de Masajes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Marcellus&family=Figtree:wght@400;500;600;700&display=swap">
+<style>
+:root{
+  --bg:#F4F6F3; --surface:#FFFFFF; --surface-2:#EEF2EE; --ink:#28302D; --muted:#66716C;
+  --line:#DDE3DE; --line-soft:#EAEEEA; --accent:#3F6B5E; --accent-ink:#FFFFFF; --accent-soft:#DCEAE4;
+  --danger:#A8443C; --danger-soft:#F6E1DE; --warn-soft:#FBF0D6; --warn-ink:#6E5316;
+  --block-ink:#26302C; --now:#C0564B; --shadow:0 1px 2px rgba(30,45,40,.06),0 6px 24px rgba(30,45,40,.07);
+  --display:"Marcellus",Georgia,"Times New Roman",serif;
+  --body:"Figtree",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#151A18; --surface:#1D2321; --surface-2:#232B28; --ink:#E6ECE9; --muted:#9BA6A1;
+    --line:#323B37; --line-soft:#29312E; --accent:#8CC2B0; --accent-ink:#10201A; --accent-soft:#24362F;
+    --danger:#E88E84; --danger-soft:#3A2522; --warn-soft:#3A3120; --warn-ink:#F0D48E;
+    --now:#EE8B7F; --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 24px rgba(0,0,0,.25);
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#151A18; --surface:#1D2321; --surface-2:#232B28; --ink:#E6ECE9; --muted:#9BA6A1;
+  --line:#323B37; --line-soft:#29312E; --accent:#8CC2B0; --accent-ink:#10201A; --accent-soft:#24362F;
+  --danger:#E88E84; --danger-soft:#3A2522; --warn-soft:#3A3120; --warn-ink:#F0D48E;
+  --now:#EE8B7F; --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 24px rgba(0,0,0,.25);
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.45;padding:0 16px 40px}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.wrap{max-width:1280px;margin:0 auto}
+
+/* Header */
+.top{display:flex;flex-wrap:wrap;align-items:center;gap:12px 20px;padding-block:20px 16px}
+.brand{display:flex;flex-direction:column;margin-right:auto}
+.brand h1{font-family:var(--display);font-weight:400;font-size:28px;letter-spacing:.01em;margin:0;line-height:1.1}
+.brand span{color:var(--muted);font-size:13px}
+.datenav{display:flex;align-items:center;gap:6px;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:4px}
+.datenav button{border:0;background:transparent;border-radius:999px;padding:6px 12px}
+.datenav button:hover{background:var(--surface-2)}
+.datenav .lbl{min-width:190px;text-align:center;font-weight:600}
+.datenav input[type=date]{position:absolute;opacity:0;pointer-events:none;width:0;height:0}
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:9px 16px;font-weight:600}
+.btn:hover{background:var(--surface-2)}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn.primary:hover{filter:brightness(1.07)}
+.btn.danger{color:var(--danger);border-color:var(--danger-soft);background:var(--danger-soft)}
+.btn.small{padding:6px 11px;font-size:13px;border-radius:8px}
+.btn.ghost{border-color:transparent;background:transparent}
+.btn.ghost:hover{background:var(--surface-2)}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+.agendar{font-size:16px;padding:11px 22px}
+
+.banner{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;background:var(--warn-soft);color:var(--warn-ink);border-radius:10px;padding:10px 14px;margin-bottom:16px;font-size:14px}
+.banner .btn{margin-left:auto}
+
+/* Layout */
+.layout{display:grid;grid-template-columns:290px minmax(0,1fr);gap:20px;align-items:start}
+@media (max-width:860px){.layout{grid-template-columns:minmax(0,1fr)}}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px}
+.panel h2{font-family:var(--display);font-weight:400;font-size:19px;margin:0 0 4px}
+.hint{color:var(--muted);font-size:13px;margin:0 0 12px}
+.label{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+
+.addform{display:flex;gap:8px;margin-bottom:12px}
+.addform input{flex:1;min-width:0}
+input[type=text],input[type=time],select{border:1px solid var(--line);background:var(--bg);border-radius:9px;padding:8px 10px}
+input[type=text]:focus,input[type=time]:focus,select:focus{border-color:var(--accent);outline:none}
+
+.roster{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.tr{border:1px solid var(--line-soft);border-radius:11px;background:var(--bg)}
+.tr.on{border-color:var(--line);background:var(--surface)}
+.trow{display:flex;align-items:center;gap:10px;padding:8px 8px 8px 10px}
+.trow label{display:flex;align-items:center;gap:10px;flex:1;min-width:0;cursor:pointer}
+.trow input[type=checkbox]{width:18px;height:18px;accent-color:var(--accent);margin:0;flex:none}
+.dot{width:14px;height:14px;border-radius:50%;flex:none;box-shadow:inset 0 0 0 1px rgba(0,0,0,.08)}
+.tname{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.count{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
+.tedit{padding:4px 10px 12px 38px;display:flex;flex-direction:column;gap:10px}
+.swatches{display:flex;flex-wrap:wrap;gap:6px}
+.sw{width:26px;height:26px;border-radius:50%;border:2px solid transparent;padding:0;box-shadow:inset 0 0 0 1px rgba(0,0,0,.08)}
+.sw[aria-pressed=true]{border-color:var(--ink)}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.msg{font-size:13px;color:var(--danger)}
+.msg.warn{color:var(--warn-ink);background:var(--warn-soft);padding:8px 10px;border-radius:8px}
+
+.hours{margin-top:18px;padding-top:14px;border-top:1px solid var(--line-soft);display:flex;flex-direction:column;gap:8px}
+.hours .row input{width:110px}
+
+/* Summary */
+.summary{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+.chip{display:flex;align-items:center;gap:8px;border-radius:999px;padding:6px 12px 6px 8px;background:var(--surface);border:1px solid var(--line);font-size:13px}
+.chip b{font-weight:600}
+.chip .n{color:var(--muted);font-variant-numeric:tabular-nums}
+
+/* Board */
+.boardwrap{background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:auto;max-height:78vh;box-shadow:var(--shadow)}
+.board{display:grid;min-width:max-content}
+.hcell{position:sticky;top:0;z-index:3;padding:10px 12px;font-weight:600;border-bottom:1px solid var(--line);color:var(--block-ink);display:flex;align-items:center;justify-content:space-between;gap:8px;min-width:0}
+.hcell small{font-weight:500;opacity:.75;font-variant-numeric:tabular-nums}
+.hcell.corner{left:0;z-index:4;background:var(--surface);color:var(--muted)}
+.tcol{position:sticky;left:0;z-index:2;background:var(--surface);border-right:1px solid var(--line)}
+.tlabel{position:absolute;right:8px;transform:translateY(-50%);font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+.col{position:relative;border-right:1px solid var(--line-soft);cursor:copy}
+.col:last-child{border-right:0}
+.ap{position:absolute;left:5px;right:5px;border-radius:9px;padding:6px 9px;color:var(--block-ink);border:0;text-align:left;overflow:hidden;cursor:pointer;display:flex;flex-direction:column;gap:1px;box-shadow:0 1px 0 rgba(0,0,0,.06),inset 0 0 0 1px rgba(0,0,0,.06);transition:transform .12s}
+.ap:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,.12),inset 0 0 0 1px rgba(0,0,0,.08)}
+.ap .t{display:flex;flex-wrap:wrap;align-items:center;gap:2px 6px;font-weight:700;font-size:13px;font-variant-numeric:tabular-nums;line-height:1.3}
+.ap .t .d{font-weight:500}
+.ap .c{font-size:15px;font-weight:600;line-height:1.25;overflow:hidden;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;word-break:break-word}
+.ap .d{font-size:11px;opacity:.7}
+.nowline{position:absolute;left:0;right:0;height:2px;background:var(--now);z-index:1;pointer-events:none}
+.nowline::before{content:"";position:absolute;left:-4px;top:-3px;width:8px;height:8px;border-radius:50%;background:var(--now)}
+.empty{padding:48px 24px;text-align:center;color:var(--muted)}
+.empty strong{display:block;font-family:var(--display);font-weight:400;font-size:20px;color:var(--ink);margin-bottom:6px}
+
+/* List */
+.listwrap{margin-top:20px}
+.listwrap h2{font-family:var(--display);font-weight:400;font-size:19px;margin:0 0 10px}
+.tablewrap{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:14px}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{padding:10px 12px;text-align:left;border-bottom:1px solid var(--line-soft);white-space:nowrap}
+th{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:700}
+tr:last-child td{border-bottom:0}
+td.num{font-variant-numeric:tabular-nums}
+.pill{display:inline-flex;align-items:center;gap:6px;padding:3px 10px 3px 6px;border-radius:999px;color:var(--block-ink);font-weight:600;font-size:13px}
+
+/* Modal */
+.overlay{position:fixed;inset:0;background:rgba(15,22,19,.45);display:flex;align-items:flex-start;justify-content:center;padding:max(5vh,16px) 16px;z-index:50;overflow:auto}
+.modal{background:var(--surface);border-radius:16px;width:100%;max-width:460px;padding:22px;box-shadow:0 20px 60px rgba(0,0,0,.3);display:flex;flex-direction:column;gap:16px}
+.modal h3{font-family:var(--display);font-weight:400;font-size:22px;margin:0}
+.field{display:flex;flex-direction:column;gap:6px}
+.field select,.field input{width:100%}
+.seg{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.seg input{position:absolute;opacity:0;pointer-events:none}
+.seg label{border:1px solid var(--line);border-radius:10px;padding:10px 6px;text-align:center;font-weight:600;cursor:pointer;background:var(--bg)}
+.seg input:checked+label{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.seg input:focus-visible+label{outline:2px solid var(--accent);outline-offset:2px}
+.quick{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
+.quick button{border:1px solid var(--line);background:var(--bg);border-radius:7px;padding:4px 9px;font-size:13px;font-variant-numeric:tabular-nums}
+.quick button:hover{border-color:var(--accent)}
+.result{display:flex;align-items:center;gap:14px;border-radius:12px;padding:12px 14px;color:var(--block-ink)}
+.result .big{font-size:24px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:.01em}
+.result .sub{font-size:13px;opacity:.8}
+.mfoot{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.mfoot .spacer{flex:1}
+.req{display:inline-block;font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:1px 6px;border-radius:5px;background:rgba(38,48,44,.82);color:#fff;vertical-align:1px}
+.reqtoggle{display:flex;align-items:center;gap:12px;border:1px solid var(--line);border-radius:10px;padding:10px 12px;cursor:pointer;background:var(--bg)}
+.reqtoggle input{width:18px;height:18px;accent-color:var(--accent);margin:0;flex:none}
+.reqtoggle span{display:flex;flex-direction:column}
+.reqtoggle small{color:var(--muted);font-size:13px}
+.reqtoggle:has(input:checked){border-color:var(--accent);background:var(--accent-soft)}
+.banner .btn+.btn{margin-left:0}
+.banner.import{background:var(--accent-soft);color:var(--ink)}
+.share{margin-top:18px;padding-top:14px;border-top:1px solid var(--line-soft);display:flex;flex-direction:column;gap:10px}
+.share .hint{margin:0}
+.share input[readonly]{width:100%;font-size:12px;color:var(--muted)}
+.linkout{display:flex;flex-direction:column;gap:8px}
+.share .msg.ok{color:var(--accent)}
+.confirm{display:flex;flex-wrap:wrap;gap:8px;align-items:center;background:var(--danger-soft);color:var(--danger);border-radius:10px;padding:10px 12px;font-size:14px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <h1>Agenda de masajes</h1>
+      <span>Turnos de 1 h, 1 h 30 y 2 h</span>
+    </div>
+    <div class="datenav" role="group" aria-label="Día">
+      <button id="prevDay" aria-label="Día anterior">‹</button>
+      <button id="dateLbl" class="lbl" title="Elegir fecha"></button>
+      <input type="date" id="datePick" aria-label="Elegir fecha">
+      <button id="nextDay" aria-label="Día siguiente">›</button>
+      <button id="today">Hoy</button>
+    </div>
+    <button class="btn primary agendar" id="btnAgendar">Agendar</button>
+  </header>
+
+  <div class="banner" id="sampleBanner" hidden>
+    <span>Estás viendo datos de ejemplo para que veas cómo funciona.</span>
+    <button class="btn small" id="clearSample">Empezar en blanco</button>
+  </div>
+  <div class="banner import" id="importBanner" hidden>
+    <span id="importTxt"></span>
+    <button class="btn small primary" id="impYes">Cargar en este dispositivo</button>
+    <button class="btn small" id="impNo">Ignorar</button>
+  </div>
+
+  <div class="layout">
+    <aside class="panel">
+      <h2>Masajistas</h2>
+      <p class="hint">Marca quién trabaja este día. La planilla crece con cada una.</p>
+      <form class="addform" id="addForm">
+        <input type="text" id="newName" placeholder="Nombre de la masajista" autocomplete="off" maxlength="30">
+        <button class="btn" type="submit">Agregar</button>
+      </form>
+      <ul class="roster" id="roster"></ul>
+      <div class="hours">
+        <span class="label">Horario de la sala</span>
+        <div class="row">
+          <input type="time" id="openAt" step="1800" aria-label="Apertura">
+          <span>a</span>
+          <input type="time" id="closeAt" step="1800" aria-label="Cierre">
+        </div>
+      </div>
+      <div class="share">
+        <span class="label">Compartir y respaldo</span>
+        <p class="hint">Crea un enlace con todo lo agendado y ábrelo en otro dispositivo para verlo igual.</p>
+        <button class="btn" id="btnLink" type="button">Crear enlace para otro dispositivo</button>
+        <div class="linkout" id="linkOut" hidden>
+          <input type="text" id="linkTxt" readonly aria-label="Enlace para compartir">
+          <div class="row">
+            <button class="btn small primary" id="btnCopy" type="button">Copiar enlace</button>
+            <button class="btn small" id="btnShare" type="button" hidden>Enviar…</button>
+          </div>
+          <p class="hint" id="linkInfo"></p>
+        </div>
+        <div class="row">
+          <button class="btn small" id="btnExport" type="button">Descargar respaldo</button>
+          <label class="btn small" for="fileIn" tabindex="0" id="lblImport">Cargar respaldo</label>
+          <input type="file" id="fileIn" accept=".json,application/json" hidden>
+        </div>
+        <p class="msg" id="shareMsg" hidden></p>
+      </div>
+    </aside>
+
+    <section>
+      <div class="summary" id="summary"></div>
+      <div class="boardwrap" id="boardwrap"></div>
+      <div class="listwrap">
+        <h2>Citas del día</h2>
+        <div class="tablewrap" id="list"></div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<div class="overlay" id="overlay" hidden>
+  <form class="modal" id="apForm" role="dialog" aria-modal="true" aria-labelledby="mTitle">
+    <h3 id="mTitle">Agendar masaje</h3>
+    <div class="field">
+      <span class="label">Masajista</span>
+      <select id="fTher" aria-label="Masajista"></select>
+    </div>
+    <div class="field">
+      <span class="label">Duración</span>
+      <div class="seg" role="radiogroup" aria-label="Duración">
+        <input type="radio" name="dur" id="d60" value="60"><label for="d60">1 hora</label>
+        <input type="radio" name="dur" id="d90" value="90"><label for="d90">1 h 30</label>
+        <input type="radio" name="dur" id="d120" value="120"><label for="d120">2 horas</label>
+      </div>
+    </div>
+    <div class="field">
+      <span class="label">Hora de inicio</span>
+      <input type="time" id="fStart" step="300" required>
+      <div class="quick" id="quick"></div>
+    </div>
+    <div class="field">
+      <span class="label">Cliente (opcional)</span>
+      <input type="text" id="fClient" placeholder="Nombre o nota" autocomplete="off" maxlength="40">
+    </div>
+    <label class="reqtoggle" for="fReq"><input type="checkbox" id="fReq"><span><b>Request</b><small>El cliente pidió a esta masajista</small></span></label>
+    <div class="result" id="result"></div>
+    <div class="msg warn" id="fMsg" hidden></div>
+    <div class="confirm" id="delConfirm" hidden>
+      <span>¿Eliminar esta cita?</span>
+      <span class="spacer" style="flex:1"></span>
+      <button type="button" class="btn small danger" id="delYes">Sí, eliminar</button>
+      <button type="button" class="btn small" id="delNo">No</button>
+    </div>
+    <div class="mfoot">
+      <button type="button" class="btn danger" id="btnDel" hidden>Eliminar</button>
+      <span class="spacer"></span>
+      <button type="button" class="btn ghost" id="btnCancel">Cancelar</button>
+      <button type="submit" class="btn primary" id="btnSave">Guardar</button>
+    </div>
+  </form>
+</div>
+
+<script>
+(function(){
+const KEY = 'agenda-masajes-v1';
+const PASTELS = ['#F7C5CC','#FBD7B5','#FAE8A8','#CFEBC3','#B9E2D6','#C3DAF3','#D5CBF1','#EFC6E3','#E6D9C3','#C4E5EF','#E0EFB3','#F4CBBB'];
+const SLOT = 30, SLOT_PX = 42; // 30 min = 42 px
+const DUR_LABEL = {60:'1 h', 90:'1 h 30', 120:'2 h'};
+
+const $ = s => document.querySelector(s);
+const uid = () => Math.random().toString(36).slice(2,9);
+const pad = n => String(n).padStart(2,'0');
+const toMin = t => { const [h,m] = t.split(':').map(Number); return h*60+m; };
+const fromMin = m => pad(Math.floor(m/60)%24)+':'+pad(m%60);
+const iso = d => d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+function seed(){
+  const ids = ['a','b','c','d'];
+  const names = ['Ana','Carla','Sofía','Valentina'];
+  const t = ids.map((id,i)=>({id, name:names[i], color:PASTELS[[0,5,3,6][i]]}));
+  const today = iso(new Date());
+  return {
+    sample:true, open:'09:00', close:'21:00', therapists:t,
+    days:{[today]:{active:['a','b','c'], appts:[
+      {id:uid(), tid:'a', start:'10:00', dur:60, client:'María (ejemplo)', req:true},
+      {id:uid(), tid:'a', start:'11:30', dur:90, client:'Laura (ejemplo)'},
+      {id:uid(), tid:'b', start:'10:30', dur:120, client:'Pareja (ejemplo)', req:true},
+      {id:uid(), tid:'c', start:'13:00', dur:60, client:'Rosa (ejemplo)'},
+      {id:uid(), tid:'c', start:'15:00', dur:90, client:''}
+    ]}}
+  };
+}
+function load(){ try{ const r = localStorage.getItem(KEY); return r ? JSON.parse(r) : null; }catch(e){ return null; } }
+function save(){ try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} }
+
+let S = load() || seed();
+let day = iso(new Date());
+let editingTid = null, confirmTid = null, roMsg = '';
+let modal = null; // {id|null}
+
+const D = () => (S.days[day] ||= {active:[], appts:[]});
+const T = id => S.therapists.find(t => t.id === id);
+const activeList = () => D().active.map(T).filter(Boolean);
+const endOf = a => toMin(a.start) + a.dur;
+
+function nextColor(){
+  const used = new Set(S.therapists.map(t=>t.color));
+  return PASTELS.find(c=>!used.has(c)) || PASTELS[S.therapists.length % PASTELS.length];
+}
+
+/* ---------- Render ---------- */
+function render(){
+  const d = new Date(day+'T12:00:00');
+  const dl = new Intl.DateTimeFormat('es',{weekday:'long',day:'numeric',month:'long'}).format(d);
+  $('#dateLbl').textContent = dl.charAt(0).toUpperCase() + dl.slice(1);
+  $('#datePick').value = day;
+  $('#sampleBanner').hidden = !S.sample;
+  $('#openAt').value = S.open; $('#closeAt').value = S.close;
+  $('#btnAgendar').disabled = activeList().length === 0;
+  $('#btnAgendar').title = activeList().length ? '' : 'Primero marca las masajistas del día';
+  renderRoster(); renderSummary(); renderBoard(); renderList();
+}
+
+function renderRoster(){
+  const ul = $('#roster'); const act = new Set(D().active);
+  if(!S.therapists.length){ ul.innerHTML = '<li class="hint">Aún no hay masajistas. Agrega la primera arriba.</li>'; return; }
+  ul.innerHTML = S.therapists.map(t => {
+    const n = D().appts.filter(a=>a.tid===t.id).length;
+    const on = act.has(t.id);
+    let html = `<li class="tr ${on?'on':''}"><div class="trow">
+      <label><input type="checkbox" data-toggle="${t.id}" ${on?'checked':''}>
+      <span class="dot" style="background:${t.color}"></span><span class="tname">${esc(t.name)}</span></label>
+      ${n?`<span class="count">${n} cita${n>1?'s':''}</span>`:''}
+      <button class="btn ghost small" data-edit="${t.id}" aria-expanded="${editingTid===t.id}">${editingTid===t.id?'Cerrar':'Editar'}</button></div>`;
+    if(roMsg && roMsg.tid === t.id) html += `<div class="tedit" style="padding-top:0"><span class="msg">${esc(roMsg.text)}</span></div>`;
+    if(editingTid === t.id){
+      const total = Object.values(S.days).reduce((s,dd)=>s+dd.appts.filter(a=>a.tid===t.id).length,0);
+      html += `<div class="tedit">
+        <input type="text" id="en-${t.id}" value="${esc(t.name)}" maxlength="30" aria-label="Nombre">
+        <div class="swatches">${PASTELS.map(c=>`<button type="button" class="sw" style="background:${c}" data-color="${c}" data-for="${t.id}" aria-label="Color ${c}" aria-pressed="${c===t.color}"></button>`).join('')}</div>
+        ${confirmTid===t.id ? `<div class="confirm"><span>¿Eliminar a ${esc(t.name)}?${total?` Se borrarán sus ${total} cita${total>1?'s':''}.`:''}</span>
+          <button class="btn small danger" data-delyes="${t.id}">Sí, eliminar</button><button class="btn small" data-delno="1">No</button></div>`
+        : `<div class="row"><button class="btn small primary" data-savet="${t.id}">Guardar</button><button class="btn small" data-canct="${t.id}">Cancelar</button><button class="btn small danger" data-delt="${t.id}">Eliminar</button></div>`}
+      </div>`;
+    }
+    return html + '</li>';
+  }).join('');
+}
+
+function renderSummary(){
+  const el = $('#summary');
+  el.innerHTML = activeList().map(t => {
+    const ap = D().appts.filter(a=>a.tid===t.id);
+    const mins = ap.reduce((s,a)=>s+a.dur,0);
+    const rq = ap.filter(a=>a.req).length;
+    return `<span class="chip"><span class="dot" style="background:${t.color}"></span><b>${esc(t.name)}</b>
+      <span class="n">${ap.length} cita${ap.length===1?'':'s'} · ${fmtDur(mins)}${rq?` · ${rq} request`:''}</span></span>`;
+  }).join('');
+}
+function fmtDur(m){ if(!m) return '0 h'; const h=Math.floor(m/60), r=m%60; return (h?h+' h':'')+(r?(h?' ':'')+r+' min':''); }
+
+function range(){
+  let lo = toMin(S.open), hi = toMin(S.close);
+  if(hi <= lo) hi = lo + 60;
+  D().appts.forEach(a=>{ lo = Math.min(lo, toMin(a.start)); hi = Math.max(hi, endOf(a)); });
+  lo = Math.floor(lo/60)*60; hi = Math.ceil(hi/60)*60;
+  return [lo, hi];
+}
+
+function renderBoard(){
+  const wrap = $('#boardwrap'); const act = activeList();
+  if(!act.length){
+    wrap.innerHTML = `<div class="empty"><strong>Planilla vacía</strong>Marca en la lista de la izquierda las masajistas que trabajan este día.<br>Aparecerá una columna por cada una.</div>`;
+    return;
+  }
+  const [lo, hi] = range();
+  const h = (hi-lo)/SLOT*SLOT_PX;
+  const grid = `repeating-linear-gradient(to bottom, var(--line-soft) 0 1px, transparent 1px ${SLOT_PX}px), repeating-linear-gradient(to bottom, var(--line) 0 1px, transparent 1px ${SLOT_PX*2}px)`;
+  let html = `<div class="board" style="grid-template-columns:64px repeat(${act.length}, minmax(220px,1fr))">`;
+  html += `<div class="hcell corner"><span class="label">Hora</span></div>`;
+  act.forEach(t=>{
+    const n = D().appts.filter(a=>a.tid===t.id).length;
+    html += `<div class="hcell" style="background:${t.color}"><span class="tname">${esc(t.name)}</span><small>${n}</small></div>`;
+  });
+  let labels = '';
+  for(let m=lo; m<=hi; m+=60){
+    const top = (m-lo)/SLOT*SLOT_PX;
+    labels += `<span class="tlabel" style="top:${Math.max(top,8)}px">${fromMin(m)}</span>`;
+  }
+  html += `<div class="tcol" style="height:${h}px;position:sticky">${labels}</div>`;
+  const now = new Date(); const nowM = now.getHours()*60+now.getMinutes();
+  const showNow = day === iso(now) && nowM >= lo && nowM <= hi;
+  act.forEach(t=>{
+    html += `<div class="col" data-col="${t.id}" style="height:${h}px;background-image:${grid}" title="Clic para agendar con ${esc(t.name)}">`;
+    if(showNow) html += `<div class="nowline" style="top:${(nowM-lo)/SLOT*SLOT_PX}px"></div>`;
+    D().appts.filter(a=>a.tid===t.id).forEach(a=>{
+      const top = (toMin(a.start)-lo)/SLOT*SLOT_PX + 2;
+      const ht = a.dur/SLOT*SLOT_PX - 4;
+      const tip = `${a.start} – ${fromMin(endOf(a))} · ${DUR_LABEL[a.dur]}${a.req?' · Request':''}${a.client?' · '+a.client:''}`;
+      html += `<button class="ap" data-ap="${a.id}" title="${esc(tip)}" style="top:${top}px;height:${ht}px;background:${t.color}">
+        ${a.client?`<span class="c">${esc(a.client)}</span>`:''}
+        <span class="t"><span>${a.start} – ${fromMin(endOf(a))}</span><span class="d">${DUR_LABEL[a.dur]}</span>${a.req?'<span class="req">Request</span>':''}</span></button>`;
+    });
+    html += `</div>`;
+  });
+  wrap.innerHTML = html + '</div>';
+}
+
+function renderList(){
+  const el = $('#list');
+  const aps = D().appts.slice().sort((a,b)=>toMin(a.start)-toMin(b.start));
+  if(!aps.length){ el.innerHTML = '<div class="empty" style="padding:24px">Sin citas este día.</div>'; return; }
+  el.innerHTML = `<table><thead><tr><th>Inicio</th><th>Fin</th><th>Duración</th><th>Masajista</th><th>Cliente</th><th>Request</th><th></th></tr></thead><tbody>${
+    aps.map(a=>{ const t=T(a.tid)||{name:'—',color:'#ddd'};
+      return `<tr><td class="num">${a.start}</td><td class="num">${fromMin(endOf(a))}</td><td>${DUR_LABEL[a.dur]}</td>
+      <td><span class="pill" style="background:${t.color}"><span class="dot" style="background:rgba(0,0,0,.12);width:8px;height:8px"></span>${esc(t.name)}</span></td>
+      <td>${a.client?esc(a.client):'<span style="color:var(--muted)">—</span>'}</td>
+      <td>${a.req?'<b>Sí</b>':'<span style="color:var(--muted)">No</span>'}</td>
+      <td style="text-align:right"><button class="btn small" data-ap="${a.id}">Editar</button></td></tr>`;}).join('')
+  }</tbody></table>`;
+}
+
+/* ---------- Modal ---------- */
+function openModal(opts){
+  // opts: {id} to edit, or {tid, start} to create
+  const act = activeList();
+  let a = opts.id ? D().appts.find(x=>x.id===opts.id) : null;
+  modal = {id: a ? a.id : null};
+  const tids = new Set(act.map(t=>t.id));
+  if(a && !tids.has(a.tid)) act.push(T(a.tid));
+  $('#fTher').innerHTML = act.map(t=>`<option value="${t.id}">${esc(t.name)}</option>`).join('');
+  $('#fTher').value = a ? a.tid : (opts.tid || act[0].id);
+  const dur = a ? a.dur : 60;
+  document.querySelector(`input[name=dur][value="${dur}"]`).checked = true;
+  $('#fStart').value = a ? a.start : (opts.start || suggestStart($('#fTher').value));
+  $('#fClient').value = a ? (a.client||'') : '';
+  $('#fReq').checked = a ? !!a.req : false;
+  $('#mTitle').textContent = a ? 'Editar cita' : 'Agendar masaje';
+  $('#btnSave').textContent = a ? 'Guardar cambios' : 'Agendar';
+  $('#btnDel').hidden = !a; $('#delConfirm').hidden = true;
+  $('#overlay').hidden = false;
+  updatePreview();
+  setTimeout(()=> (a ? $('#fStart') : $('#fTher')).focus(), 0);
+}
+function closeModal(){ $('#overlay').hidden = true; modal = null; }
+
+function suggestStart(tid){
+  const ends = D().appts.filter(a=>a.tid===tid).map(endOf);
+  const base = ends.length ? Math.max(...ends) : toMin(S.open);
+  return fromMin(base);
+}
+function currentDur(){ return Number(document.querySelector('input[name=dur]:checked').value); }
+function conflictFor(tid, s, e, ignoreId){
+  return D().appts.find(a => a.tid===tid && a.id!==ignoreId && toMin(a.start) < e && s < endOf(a));
+}
+function updatePreview(){
+  const tid = $('#fTher').value, t = T(tid), st = $('#fStart').value, dur = currentDur();
+  const res = $('#result'), msg = $('#fMsg');
+  // quick picks: free slots for this therapist
+  const q = []; const lo = toMin(S.open), hi = toMin(S.close);
+  for(let m=lo; m+dur<=hi && q.length<8; m+=30){ if(!conflictFor(tid,m,m+dur,modal&&modal.id)) q.push(m); }
+  $('#quick').innerHTML = q.length ? q.map(m=>`<button type="button" data-q="${fromMin(m)}">${fromMin(m)}</button>`).join('') : '';
+  if(!st){ res.style.background = 'var(--surface-2)'; res.style.color='var(--muted)'; res.innerHTML = '<span>Elige la hora de inicio para calcular el final.</span>'; msg.hidden = true; return; }
+  res.style.background = t.color; res.style.color = '';
+  const s = toMin(st), e = s + dur;
+  res.innerHTML = `<div><div class="big">${st} → ${fromMin(e)}</div><div class="sub">${esc(t.name)} · ${DUR_LABEL[dur]}${$('#fReq').checked?' · Request':''}${e>=1440?' · termina al día siguiente':''}</div></div>`;
+  const c = conflictFor(tid, s, e, modal && modal.id);
+  if(c){ msg.hidden = false; msg.textContent = `Se cruza con otra cita de ${t.name} (${c.start} – ${fromMin(endOf(c))}). Cambia la hora, la duración o la masajista.`; }
+  else if(e > toMin(S.close)){ msg.hidden = false; msg.textContent = `Termina después del cierre (${S.close}). Puedes guardarla igual.`; }
+  else msg.hidden = true;
+  $('#btnSave').disabled = !!c;
+}
+
+/* ---------- Events ---------- */
+$('#addForm').addEventListener('submit', e=>{
+  e.preventDefault();
+  const name = $('#newName').value.trim(); if(!name) return;
+  const t = {id:uid(), name, color:nextColor()};
+  S.therapists.push(t);
+  if(!D().active.includes(t.id)) D().active.push(t.id);
+  $('#newName').value = ''; save(); render(); $('#newName').focus();
+});
+
+$('#roster').addEventListener('change', e=>{
+  const id = e.target.dataset.toggle; if(!id) return;
+  const d = D(); roMsg = '';
+  if(e.target.checked){ if(!d.active.includes(id)) d.active.push(id); }
+  else {
+    const n = d.appts.filter(a=>a.tid===id).length;
+    if(n){ e.target.checked = true; roMsg = {tid:id, text:`Tiene ${n} cita${n>1?'s':''} este día. Cámbialas de masajista o elimínalas antes de quitarla.`}; }
+    else d.active = d.active.filter(x=>x!==id);
+  }
+  save(); render();
+});
+
+$('#roster').addEventListener('click', e=>{
+  const b = e.target.closest('button'); if(!b) return;
+  const ds = b.dataset;
+  if(ds.edit){ editingTid = editingTid===ds.edit ? null : ds.edit; confirmTid = null; roMsg=''; renderRoster(); if(editingTid) $('#en-'+editingTid).focus(); }
+  else if(ds.color){ const t=T(ds.for); t.color = ds.color; save(); render(); }
+  else if(ds.savet){ const t=T(ds.savet); const v=$('#en-'+t.id).value.trim(); if(v) t.name=v; editingTid=null; save(); render(); }
+  else if(ds.canct){ editingTid = null; renderRoster(); }
+  else if(ds.delt){ confirmTid = ds.delt; renderRoster(); }
+  else if(ds.delno){ confirmTid = null; renderRoster(); }
+  else if(ds.delyes){
+    const id = ds.delyes;
+    S.therapists = S.therapists.filter(t=>t.id!==id);
+    Object.values(S.days).forEach(dd=>{ dd.active = dd.active.filter(x=>x!==id); dd.appts = dd.appts.filter(a=>a.tid!==id); });
+    editingTid = confirmTid = null; save(); render();
+  }
+});
+$('#roster').addEventListener('keydown', e=>{
+  if(e.key==='Enter' && e.target.id && e.target.id.startsWith('en-')){ e.preventDefault(); $(`[data-savet="${e.target.id.slice(3)}"]`)?.click(); }
+});
+
+$('#boardwrap').addEventListener('click', e=>{
+  const ap = e.target.closest('[data-ap]');
+  if(ap){ openModal({id:ap.dataset.ap}); return; }
+  const col = e.target.closest('[data-col]');
+  if(col){
+    const [lo] = range();
+    const y = e.clientY - col.getBoundingClientRect().top;
+    const m = lo + Math.floor(y/SLOT_PX*SLOT/30)*30;
+    openModal({tid:col.dataset.col, start:fromMin(m)});
+  }
+});
+$('#list').addEventListener('click', e=>{ const b=e.target.closest('[data-ap]'); if(b) openModal({id:b.dataset.ap}); });
+
+$('#btnAgendar').addEventListener('click', ()=>{ if(activeList().length) openModal({}); });
+$('#fTher').addEventListener('change', updatePreview);
+$('#fStart').addEventListener('input', updatePreview);
+$('#fReq').addEventListener('change', updatePreview);
+document.querySelectorAll('input[name=dur]').forEach(r=>r.addEventListener('change', updatePreview));
+$('#quick').addEventListener('click', e=>{ const b=e.target.closest('[data-q]'); if(b){ $('#fStart').value=b.dataset.q; updatePreview(); }});
+$('#btnCancel').addEventListener('click', closeModal);
+$('#overlay').addEventListener('mousedown', e=>{ if(e.target.id==='overlay') closeModal(); });
+document.addEventListener('keydown', e=>{ if(e.key==='Escape' && !$('#overlay').hidden) closeModal(); });
+
+$('#apForm').addEventListener('submit', e=>{
+  e.preventDefault();
+  const tid = $('#fTher').value, start = $('#fStart').value, dur = currentDur();
+  if(!start){ $('#fStart').focus(); return; }
+  const s = toMin(start);
+  if(conflictFor(tid, s, s+dur, modal.id)) return;
+  const data = {tid, start, dur, client: $('#fClient').value.trim(), req: $('#fReq').checked};
+  if(modal.id) Object.assign(D().appts.find(a=>a.id===modal.id), data);
+  else D().appts.push({id:uid(), ...data});
+  if(!D().active.includes(tid)) D().active.push(tid);
+  save(); closeModal(); render();
+});
+$('#btnDel').addEventListener('click', ()=>{ $('#delConfirm').hidden = false; $('#delNo').focus(); });
+$('#delNo').addEventListener('click', ()=>{ $('#delConfirm').hidden = true; });
+$('#delYes').addEventListener('click', ()=>{
+  D().appts = D().appts.filter(a=>a.id!==modal.id); save(); closeModal(); render();
+});
+
+function shiftDay(n){ const d = new Date(day+'T12:00:00'); d.setDate(d.getDate()+n); day = iso(d); editingTid=null; roMsg=''; render(); }
+$('#prevDay').addEventListener('click', ()=>shiftDay(-1));
+$('#nextDay').addEventListener('click', ()=>shiftDay(1));
+$('#today').addEventListener('click', ()=>{ day = iso(new Date()); render(); });
+$('#dateLbl').addEventListener('click', ()=>{ const p=$('#datePick'); try{ p.showPicker(); }catch(_){ p.style.cssText='position:static;opacity:1;width:auto;height:auto'; p.focus(); } });
+$('#datePick').addEventListener('change', e=>{ if(e.target.value){ day = e.target.value; render(); } });
+
+$('#openAt').addEventListener('change', e=>{ if(e.target.value){ S.open = e.target.value; save(); render(); }});
+$('#closeAt').addEventListener('change', e=>{ if(e.target.value){ S.close = e.target.value; save(); render(); }});
+
+$('#clearSample').addEventListener('click', ()=>{
+  S = {sample:false, open:S.open, close:S.close, therapists:[], days:{}}; save(); render(); $('#newName').focus();
+});
+// Adding real data turns off the sample banner only when the user clears it explicitly.
+
+/* ---------- Compartir / respaldo ---------- */
+const b64u = u8 => { let s=''; for(let i=0;i<u8.length;i+=0x8000) s+=String.fromCharCode.apply(null,u8.subarray(i,i+0x8000)); return btoa(s).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,''); };
+const unb64u = str => { const b=atob(str.replace(/-/g,'+').replace(/_/g,'/')); const u=new Uint8Array(b.length); for(let i=0;i<b.length;i++) u[i]=b.charCodeAt(i); return u; };
+async function pack(obj){
+  const bytes = new TextEncoder().encode(JSON.stringify(obj));
+  if('CompressionStream' in window){
+    const st = new Blob([bytes]).stream().pipeThrough(new CompressionStream('deflate-raw'));
+    return 'z' + b64u(new Uint8Array(await new Response(st).arrayBuffer()));
+  }
+  return 'j' + b64u(bytes);
+}
+async function unpack(str){
+  let bytes = unb64u(str.slice(1));
+  if(str[0]==='z'){
+    const st = new Blob([bytes]).stream().pipeThrough(new DecompressionStream('deflate-raw'));
+    bytes = new Uint8Array(await new Response(st).arrayBuffer());
+  }
+  return JSON.parse(new TextDecoder().decode(bytes));
+}
+function snapshot(fromDay){
+  const days = {};
+  Object.entries(S.days).forEach(([k,v])=>{ if((!fromDay || k>=fromDay) && (v.appts.length || v.active.length)) days[k]=v; });
+  return {v:1, open:S.open, close:S.close, therapists:S.therapists, days};
+}
+function valid(p){ return p && Array.isArray(p.therapists) && p.days && typeof p.days==='object'; }
+function countAppts(p){ return Object.values(p.days).reduce((n,d)=>n+(d.appts?d.appts.length:0),0); }
+function merge(p){
+  if(S.sample) S = {sample:false, open:S.open, close:S.close, therapists:[], days:{}};
+  p.therapists.forEach(t=>{ const e=T(t.id); if(e){ e.name=t.name; e.color=t.color; } else S.therapists.push({id:t.id,name:t.name,color:t.color}); });
+  Object.entries(p.days).forEach(([k,v])=>{ S.days[k] = {active:v.active||[], appts:v.appts||[]}; });
+  if(p.open) S.open = p.open; if(p.close) S.close = p.close;
+  save(); render();
+}
+let pending = null;
+function offerImport(p, origen){
+  pending = p;
+  const n = countAppts(p), nd = Object.keys(p.days).length;
+  $('#importTxt').textContent = `${origen} trae ${p.therapists.length} masajista${p.therapists.length===1?'':'s'} y ${n} cita${n===1?'':'s'} en ${nd} día${nd===1?'':'s'}. Al cargarlo se reemplazan las citas de esos días en este dispositivo.`;
+  $('#importBanner').hidden = false;
+  window.scrollTo({top:0});
+}
+$('#impYes').addEventListener('click', ()=>{ if(pending) merge(pending); pending=null; $('#importBanner').hidden=true; clearHash(); });
+$('#impNo').addEventListener('click', ()=>{ pending=null; $('#importBanner').hidden=true; clearHash(); });
+function clearHash(){ try{ history.replaceState(null,'',location.pathname+location.search); }catch(_){} }
+function shareMsg(text, ok){ const m=$('#shareMsg'); m.textContent=text; m.className='msg'+(ok?' ok':''); m.hidden=!text; }
+
+$('#btnLink').addEventListener('click', async ()=>{
+  shareMsg('');
+  const snap = snapshot(null);
+  const url = location.href.split('#')[0] + '#agenda=' + await pack(snap);
+  $('#linkTxt').value = url; $('#linkOut').hidden = false;
+  const n = countAppts(snap);
+  let info = `Incluye todo lo agendado: ${n} cita${n===1?'':'s'}. Si agendas algo nuevo, crea un enlace nuevo.`;
+  if(location.protocol==='file:') info = 'Ojo: estás usando la agenda desde un archivo de este computador, así que el enlace no abrirá en otro dispositivo. Funciona cuando la agenda está publicada en internet (por ejemplo, GitHub Pages).';
+  $('#linkInfo').textContent = info;
+  $('#btnShare').hidden = !navigator.share;
+});
+$('#btnCopy').addEventListener('click', ()=>{
+  const inp = $('#linkTxt');
+  const done = ()=>{ $('#btnCopy').textContent='Copiado'; setTimeout(()=>$('#btnCopy').textContent='Copiar enlace',1800); };
+  const fallback = ()=>{ inp.focus(); inp.select(); try{ document.execCommand('copy'); done(); }catch(_){ shareMsg('Selecciona el enlace y cópialo a mano.'); } };
+  if(navigator.clipboard) navigator.clipboard.writeText(inp.value).then(done, fallback); else fallback();
+});
+$('#btnShare').addEventListener('click', ()=>{ navigator.share({title:'Agenda de masajes', url:$('#linkTxt').value}).catch(()=>{}); });
+
+$('#btnExport').addEventListener('click', ()=>{
+  const data = snapshot(null);
+  const blob = new Blob([JSON.stringify(data)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = `agenda-masajes-${iso(new Date())}.json`;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(a.href), 2000);
+  shareMsg(`Respaldo descargado con ${countAppts(data)} citas. Búscalo en tu carpeta de Descargas.`, true);
+});
+$('#lblImport').addEventListener('keydown', e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); $('#fileIn').click(); } });
+$('#fileIn').addEventListener('change', async e=>{
+  const file = e.target.files[0]; e.target.value=''; if(!file) return;
+  try{ const p = JSON.parse(await file.text()); if(!valid(p)) throw 0; shareMsg(''); offerImport(p, 'El respaldo'); }
+  catch(_){ shareMsg('Ese archivo no es un respaldo de la agenda. Elige el archivo .json que descargaste con "Descargar respaldo".'); }
+});
+
+(async ()=>{
+  const h = location.hash;
+  if(!h.startsWith('#agenda=')) return;
+  try{ const p = await unpack(h.slice(8)); if(!valid(p)) throw 0; offerImport(p, 'Este enlace'); }
+  catch(_){ $('#importTxt').textContent='El enlace está incompleto o dañado. Pide que te lo envíen de nuevo.'; $('#impYes').hidden=true; $('#importBanner').hidden=false; }
+})();
+
+setInterval(()=>{ if($('#overlay').hidden) renderBoard(); }, 60000);
+render();
+})();
+</script>
+
+</body>
+</html>
