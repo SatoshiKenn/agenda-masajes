@@ -141,9 +141,10 @@ input[type=text]:focus,input[type=time]:focus,select:focus{border-color:var(--ac
 .bdate{font-weight:600;color:var(--muted);font-size:14px}
 .boardshell:not(.max) #fsAgendar{display:none}
 .boardshell.max{position:fixed;inset:0;z-index:40;background:var(--bg);padding:calc(12px + env(safe-area-inset-top, 0px)) 16px calc(12px + env(safe-area-inset-bottom, 0px))}
-.boardshell.max .boardwrap{flex:1;max-height:none;min-height:0}
+.boardshell.max{overscroll-behavior:none;touch-action:pan-x pan-y}
+.boardshell.max .boardwrap{flex:1;max-height:none;min-height:0;overscroll-behavior:contain}
 .boardshell.max .bdate{color:var(--ink);font-family:var(--display);font-weight:400;font-size:20px}
-body.noscroll{overflow:hidden}
+html:has(body.noscroll),body.noscroll{overflow:hidden;overscroll-behavior:none}
 .empty{padding:48px 24px;text-align:center;color:var(--muted)}
 .empty strong{display:block;font-family:var(--display);font-weight:400;font-size:20px;color:var(--ink);margin-bottom:6px}
 
@@ -680,8 +681,6 @@ function setFull(on){
 }
 $('#btnFull').addEventListener('click', ()=> setFull(!$('#boardshell').classList.contains('max')));
 $('#fsAgendar').addEventListener('click', ()=> $('#btnAgendar').click());
-document.addEventListener('fullscreenchange', ()=>{ if(!document.fullscreenElement && $('#boardshell').classList.contains('max')) setFull(false); });
-window.addEventListener('keydown', e=>{ if(e.key==='Escape' && $('#overlay').hidden && $('#boardshell').classList.contains('max')) setFull(false); }, true);
 $('#btnUndo').addEventListener('click', undo);
 $('#btnRedo').addEventListener('click', redo);
 document.addEventListener('keydown', e=>{
