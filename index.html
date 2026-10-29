@@ -93,6 +93,15 @@ input[type=text]:focus,input[type=time]:focus,select:focus{border-color:var(--ac
 .sw{width:26px;height:26px;border-radius:50%;border:2px solid transparent;padding:0;box-shadow:inset 0 0 0 1px rgba(0,0,0,.08)}
 .sw[aria-pressed=true]{border-color:var(--ink)}
 .row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.hsl{display:flex;flex-direction:column;gap:8px}
+.sl{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--muted);font-weight:600}
+.sl input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:12px;border-radius:999px;margin:0;box-shadow:inset 0 0 0 1px rgba(0,0,0,.1);cursor:pointer}
+.sl input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;border-radius:50%;background:#fff;border:2px solid var(--ink);box-shadow:0 1px 4px rgba(0,0,0,.3)}
+.sl input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;background:#fff;border:2px solid var(--ink);box-shadow:0 1px 4px rgba(0,0,0,.3)}
+.sl input[type=range]::-moz-range-track{background:transparent}
+.hslprev{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted)}
+.hslprev .dot{width:22px;height:22px}
+.hslprev code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
 .msg{font-size:13px;color:var(--danger)}
 .msg.warn{color:var(--warn-ink);background:var(--warn-soft);padding:8px 10px;border-radius:8px}
 
@@ -126,6 +135,15 @@ input[type=text]:focus,input[type=time]:focus,select:focus{border-color:var(--ac
 .ap .d{font-size:11px;opacity:.7}
 .nowline{position:absolute;left:0;right:0;height:2px;background:var(--now);z-index:1;pointer-events:none}
 .nowline::before{content:"";position:absolute;left:-4px;top:-3px;width:8px;height:8px;border-radius:50%;background:var(--now)}
+.boardshell{display:flex;flex-direction:column;gap:8px}
+.boardbar{display:flex;align-items:center;gap:8px}
+.boardbar .spacer{flex:1}
+.bdate{font-weight:600;color:var(--muted);font-size:14px}
+.boardshell:not(.max) #fsAgendar{display:none}
+.boardshell.max{position:fixed;inset:0;z-index:40;background:var(--bg);padding:calc(12px + env(safe-area-inset-top, 0px)) 16px calc(12px + env(safe-area-inset-bottom, 0px))}
+.boardshell.max .boardwrap{flex:1;max-height:none;min-height:0}
+.boardshell.max .bdate{color:var(--ink);font-family:var(--display);font-weight:400;font-size:20px}
+body.noscroll{overflow:hidden}
 .empty{padding:48px 24px;text-align:center;color:var(--muted)}
 .empty strong{display:block;font-family:var(--display);font-weight:400;font-size:20px;color:var(--ink);margin-bottom:6px}
 
@@ -146,14 +164,15 @@ td.num{font-variant-numeric:tabular-nums}
 .modal h3{font-family:var(--display);font-weight:400;font-size:22px;margin:0}
 .field{display:flex;flex-direction:column;gap:6px}
 .field select,.field input{width:100%}
+.field .timepick{display:flex;align-items:center;gap:6px}
+.field .timepick select{width:auto;min-width:76px;font-size:18px;font-weight:600;font-variant-numeric:tabular-nums;text-align:center}
+.timepick .colon{font-size:20px;font-weight:700}
+.timepick .hrs{color:var(--muted);font-size:14px;margin-left:4px}
 .seg{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
 .seg input{position:absolute;opacity:0;pointer-events:none}
 .seg label{border:1px solid var(--line);border-radius:10px;padding:10px 6px;text-align:center;font-weight:600;cursor:pointer;background:var(--bg)}
 .seg input:checked+label{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
 .seg input:focus-visible+label{outline:2px solid var(--accent);outline-offset:2px}
-.quick{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
-.quick button{border:1px solid var(--line);background:var(--bg);border-radius:7px;padding:4px 9px;font-size:13px;font-variant-numeric:tabular-nums}
-.quick button:hover{border-color:var(--accent)}
 .result{display:flex;align-items:center;gap:14px;border-radius:12px;padding:12px 14px;color:var(--block-ink)}
 .result .big{font-size:24px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:.01em}
 .result .sub{font-size:13px;opacity:.8}
@@ -220,14 +239,6 @@ td.num{font-variant-numeric:tabular-nums}
         <button class="btn" type="submit">Agregar</button>
       </form>
       <ul class="roster" id="roster"></ul>
-      <div class="hours">
-        <span class="label">Horario de la sala</span>
-        <div class="row">
-          <input type="time" id="openAt" step="1800" aria-label="Apertura">
-          <span>a</span>
-          <input type="time" id="closeAt" step="1800" aria-label="Cierre">
-        </div>
-      </div>
       <div class="share">
         <span class="label">Compartir y respaldo</span>
         <p class="hint">Crea un enlace con todo lo agendado y ábrelo en otro dispositivo para verlo igual.</p>
@@ -251,7 +262,15 @@ td.num{font-variant-numeric:tabular-nums}
 
     <section>
       <div class="summary" id="summary"></div>
-      <div class="boardwrap" id="boardwrap"></div>
+      <div class="boardshell" id="boardshell">
+        <div class="boardbar">
+          <span class="bdate" id="bDate"></span>
+          <span class="spacer"></span>
+          <button class="btn small primary" id="fsAgendar" type="button">Agendar</button>
+          <button class="btn small" id="btnFull" type="button">⛶ Pantalla completa</button>
+        </div>
+        <div class="boardwrap" id="boardwrap"></div>
+      </div>
       <div class="listwrap">
         <h2>Citas del día</h2>
         <div class="tablewrap" id="list"></div>
@@ -279,8 +298,10 @@ td.num{font-variant-numeric:tabular-nums}
     </div>
     <div class="field">
       <span class="label">Hora de inicio</span>
-      <input type="time" id="fStart" step="300" required>
-      <div class="quick" id="quick"></div>
+      <div class="timepick">
+        <select id="fHour" aria-label="Hora"></select><span class="colon">:</span><select id="fMin" aria-label="Minutos"></select><span class="hrs">hrs</span>
+        <input type="hidden" id="fStart">
+      </div>
     </div>
     <div class="field">
       <span class="label">Cliente (opcional)</span>
@@ -308,6 +329,7 @@ td.num{font-variant-numeric:tabular-nums}
 (function(){
 const KEY = 'agenda-masajes-v1';
 const PASTELS = ['#F7C5CC','#FBD7B5','#FAE8A8','#CFEBC3','#B9E2D6','#C3DAF3','#D5CBF1','#EFC6E3','#E6D9C3','#C4E5EF','#E0EFB3','#F4CBBB'];
+const OPEN = '10:30', CLOSE = '21:00', LAST_START = '20:00';
 const SLOT = 30, SLOT_PX = 42; // 30 min = 42 px
 const DUR_LABEL = {60:'60 min', 90:'90 min', 120:'120 min'};
 
@@ -327,7 +349,7 @@ function seed(){
   return {
     sample:true, open:'09:00', close:'21:00', therapists:t,
     days:{[today]:{active:['a','b','c'], appts:[
-      {id:uid(), tid:'a', start:'10:00', dur:60, client:'María (ejemplo)', req:true},
+      {id:uid(), tid:'a', start:'10:30', dur:60, client:'María (ejemplo)', req:true},
       {id:uid(), tid:'a', start:'11:30', dur:90, client:'Laura (ejemplo)'},
       {id:uid(), tid:'b', start:'10:30', dur:120, client:'Pareja (ejemplo)', req:true},
       {id:uid(), tid:'c', start:'13:00', dur:60, client:'Rosa (ejemplo)'},
@@ -350,8 +372,10 @@ function redo(){ if(!redoStack.length) return; undoStack.push(lastSaved); restor
 function updateUndoBtns(){ $('#btnUndo').disabled = !undoStack.length; $('#btnRedo').disabled = !redoStack.length; }
 
 let S = load() || seed();
+S.open = OPEN; S.close = CLOSE; // horario fijo de la sala
 let lastSaved = JSON.stringify(S);
 let day = iso(new Date());
+let editOrig = null;
 let editingTid = null, confirmTid = null, roMsg = '';
 let modal = null; // {id|null}
 
@@ -369,10 +393,9 @@ function nextColor(){
 function render(){
   const d = new Date(day+'T12:00:00');
   const dl = new Intl.DateTimeFormat('es',{weekday:'long',day:'numeric',month:'long'}).format(d);
-  $('#dateLbl').textContent = dl.charAt(0).toUpperCase() + dl.slice(1);
+  $('#dateLbl').textContent = $('#bDate').textContent = dl.charAt(0).toUpperCase() + dl.slice(1);
   $('#datePick').value = day;
   $('#sampleBanner').hidden = !S.sample;
-  $('#openAt').value = S.open; $('#closeAt').value = S.close;
   $('#btnAgendar').disabled = activeList().length === 0;
   $('#btnAgendar').title = activeList().length ? '' : 'Primero marca las masajistas del día';
   renderRoster(); renderSummary(); renderBoard(); renderList(); updateUndoBtns();
@@ -395,6 +418,7 @@ function renderRoster(){
       html += `<div class="tedit">
         <input type="text" id="en-${t.id}" value="${esc(t.name)}" maxlength="30" aria-label="Nombre">
         <div class="swatches">${PASTELS.map(c=>`<button type="button" class="sw" style="background:${c}" data-color="${c}" data-for="${t.id}" aria-label="Color ${c}" aria-pressed="${c===t.color}"></button>`).join('')}</div>
+        ${hslBlock(t)}
         ${confirmTid===t.id ? `<div class="confirm"><span>¿Eliminar a ${esc(t.name)}?${total?` Se borrarán sus ${total} cita${total>1?'s':''}.`:''}</span>
           <button class="btn small danger" data-delyes="${t.id}">Sí, eliminar</button><button class="btn small" data-delno="1">No</button></div>`
         : `<div class="row"><button class="btn small primary" data-savet="${t.id}">Guardar</button><button class="btn small" data-canct="${t.id}">Cancelar</button><button class="btn small danger" data-delt="${t.id}">Eliminar</button></div>`}
@@ -404,6 +428,35 @@ function renderRoster(){
   }).join('');
 }
 
+function hexToHsl(hex){
+  const n = parseInt(hex.slice(1),16), r=(n>>16&255)/255, g=(n>>8&255)/255, b=(n&255)/255;
+  const mx=Math.max(r,g,b), mn=Math.min(r,g,b), l=(mx+mn)/2; let h=0, s=0;
+  if(mx!==mn){ const d=mx-mn; s = l>.5 ? d/(2-mx-mn) : d/(mx+mn);
+    h = mx===r ? (g-b)/d+(g<b?6:0) : mx===g ? (b-r)/d+2 : (r-g)/d+4; h*=60; }
+  return [Math.round(h), Math.round(s*100), Math.round(l*100)];
+}
+function hslToHex(h,s,l){
+  s/=100; l/=100; const k=n=>(n+h/30)%12, a=s*Math.min(l,1-l);
+  const f=n=>Math.round(255*(l-a*Math.max(-1,Math.min(k(n)-3,9-k(n),1)))).toString(16).padStart(2,'0');
+  return ('#'+f(0)+f(8)+f(4)).toUpperCase();
+}
+function hslTracks(h,s,l){
+  return {
+    h: 'linear-gradient(to right,'+[0,60,120,180,240,300,360].map(x=>`hsl(${x} ${s}% ${l}%)`).join(',')+')',
+    s: `linear-gradient(to right, hsl(${h} 0% ${l}%), hsl(${h} 100% ${l}%))`,
+    l: `linear-gradient(to right, hsl(${h} ${s}% 55%), hsl(${h} ${s}% 95%))`
+  };
+}
+function hslBlock(t){
+  let [h,s,l] = hexToHsl(t.color); l = Math.min(95, Math.max(55, l));
+  const tr = hslTracks(h,s,l);
+  return `<div class="hsl" data-for="${t.id}">
+    <label class="sl"><span>Tono</span><input type="range" min="0" max="360" value="${h}" data-hsl="h" style="background:${tr.h}"></label>
+    <label class="sl"><span>Saturación</span><input type="range" min="0" max="100" value="${s}" data-hsl="s" style="background:${tr.s}"></label>
+    <label class="sl"><span>Claridad</span><input type="range" min="55" max="95" value="${l}" data-hsl="l" style="background:${tr.l}"></label>
+    <div class="hslprev"><span class="dot" style="background:${t.color}"></span><code>${t.color}</code></div>
+  </div>`;
+}
 function renderSummary(){
   const el = $('#summary');
   el.innerHTML = activeList().map(t => {
@@ -420,7 +473,7 @@ function range(){
   let lo = toMin(S.open), hi = toMin(S.close);
   if(hi <= lo) hi = lo + 60;
   D().appts.forEach(a=>{ lo = Math.min(lo, toMin(a.start)); hi = Math.max(hi, endOf(a)); });
-  lo = Math.floor(lo/60)*60; hi = Math.ceil(hi/60)*60;
+  lo = Math.floor(lo/30)*30; hi = Math.ceil(hi/30)*30;
   return [lo, hi];
 }
 
@@ -440,7 +493,8 @@ function renderBoard(){
     html += `<div class="hcell" style="background:${t.color}"><span class="tname">${esc(t.name)}</span><small>${n}</small></div>`;
   });
   let labels = '';
-  for(let m=lo; m<=hi; m+=60){
+  if(lo%60) labels += `<span class="tlabel" style="top:8px">${fromMin(lo)}</span>`;
+  for(let m=Math.ceil(lo/60)*60; m<=hi; m+=60){
     const top = (m-lo)/SLOT*SLOT_PX;
     labels += `<span class="tlabel" style="top:${Math.max(top,8)}px">${fromMin(m)}</span>`;
   }
@@ -448,7 +502,7 @@ function renderBoard(){
   const now = new Date(); const nowM = now.getHours()*60+now.getMinutes();
   const showNow = day === iso(now) && nowM >= lo && nowM <= hi;
   act.forEach(t=>{
-    html += `<div class="col" data-col="${t.id}" style="height:${h}px;background-image:${grid}" title="Clic para agendar con ${esc(t.name)}">`;
+    html += `<div class="col" data-col="${t.id}" style="height:${h}px;background-image:${grid};background-position:0 0, 0 ${lo%60 ? SLOT_PX : 0}px" title="Clic para agendar con ${esc(t.name)}">`;
     if(showNow) html += `<div class="nowline" style="top:${(nowM-lo)/SLOT*SLOT_PX}px"></div>`;
     D().appts.filter(a=>a.tid===t.id).forEach(a=>{
       const top = (toMin(a.start)-lo)/SLOT*SLOT_PX + 2;
@@ -489,7 +543,7 @@ function openModal(opts){
   $('#fTher').value = a ? a.tid : (opts.tid || act[0].id);
   const dur = a ? a.dur : 60;
   document.querySelector(`input[name=dur][value="${dur}"]`).checked = true;
-  $('#fStart').value = a ? a.start : (opts.start || suggestStart($('#fTher').value));
+  setStart(a ? a.start : (opts.start || suggestStart($('#fTher').value)));
   $('#fClient').value = a ? (a.client||'') : '';
   $('#fReq').checked = a ? !!a.req : false;
   $('#mTitle').textContent = a ? 'Editar cita' : 'Agendar masaje';
@@ -497,7 +551,7 @@ function openModal(opts){
   $('#btnDel').hidden = !a; $('#delConfirm').hidden = true; $('#mFoot').hidden = false;
   $('#overlay').hidden = false;
   updatePreview();
-  setTimeout(()=> (a ? $('#fStart') : $('#fTher')).focus(), 0);
+  setTimeout(()=> (a ? $('#fHour') : $('#fTher')).focus(), 0);
 }
 function closeModal(){ $('#overlay').hidden = true; modal = null; }
 
@@ -513,19 +567,16 @@ function conflictFor(tid, s, e, ignoreId){
 function updatePreview(){
   const tid = $('#fTher').value, t = T(tid), st = $('#fStart').value, dur = currentDur();
   const res = $('#result'), msg = $('#fMsg');
-  // quick picks: free slots for this therapist
-  const q = []; const lo = toMin(S.open), hi = toMin(S.close);
-  for(let m=lo; m+dur<=hi && q.length<8; m+=30){ if(!conflictFor(tid,m,m+dur,modal&&modal.id)) q.push(m); }
-  $('#quick').innerHTML = q.length ? q.map(m=>`<button type="button" data-q="${fromMin(m)}">${fromMin(m)}</button>`).join('') : '';
   if(!st){ res.style.background = 'var(--surface-2)'; res.style.color='var(--muted)'; res.innerHTML = '<span>Elige la hora de inicio para calcular el final.</span>'; msg.hidden = true; return; }
   res.style.background = t.color; res.style.color = '';
   const s = toMin(st), e = s + dur;
   res.innerHTML = `<div><div class="big">${st} → ${fromMin(e)}</div><div class="sub">${esc(t.name)} · ${DUR_LABEL[dur]}${$('#fReq').checked?' · Request':''}${e>=1440?' · termina al día siguiente':''}</div></div>`;
-  const c = conflictFor(tid, s, e, modal && modal.id);
-  if(c){ msg.hidden = false; msg.textContent = `Se cruza con otra cita de ${t.name} (${c.start} – ${fromMin(endOf(c))}). Cambia la hora, la duración o la masajista.`; }
+  const c = conflictFor(tid, s, e, modal && modal.id), late = s > toMin(LAST_START);
+  if(late){ msg.hidden = false; msg.textContent = `La última hora para agendar es a las ${LAST_START}. Elige una hora más temprana.`; }
+  else if(c){ msg.hidden = false; msg.textContent = `Se cruza con otra cita de ${t.name} (${c.start} – ${fromMin(endOf(c))}). Cambia la hora, la duración o la masajista.`; }
   else if(e > toMin(S.close)){ msg.hidden = false; msg.textContent = `Termina después del cierre (${S.close}). Puedes guardarla igual.`; }
   else msg.hidden = true;
-  $('#btnSave').disabled = !!c;
+  $('#btnSave').disabled = !!c || late;
 }
 
 /* ---------- Events ---------- */
@@ -553,10 +604,10 @@ $('#roster').addEventListener('change', e=>{
 $('#roster').addEventListener('click', e=>{
   const b = e.target.closest('button'); if(!b) return;
   const ds = b.dataset;
-  if(ds.edit){ editingTid = editingTid===ds.edit ? null : ds.edit; confirmTid = null; roMsg=''; renderRoster(); if(editingTid) $('#en-'+editingTid).focus(); }
+  if(ds.edit){ editingTid = editingTid===ds.edit ? null : ds.edit; editOrig = editingTid ? T(editingTid).color : null; confirmTid = null; roMsg=''; renderRoster(); if(editingTid) $('#en-'+editingTid).focus(); }
   else if(ds.color){ const t=T(ds.for); t.color = ds.color; save(); render(); }
   else if(ds.savet){ const t=T(ds.savet); const v=$('#en-'+t.id).value.trim(); if(v) t.name=v; editingTid=null; save(); render(); }
-  else if(ds.canct){ editingTid = null; renderRoster(); }
+  else if(ds.canct){ const t=T(ds.canct); editingTid = null; if(editOrig && t.color!==editOrig){ t.color = editOrig; save(); render(); } else renderRoster(); }
   else if(ds.delt){ confirmTid = ds.delt; renderRoster(); }
   else if(ds.delno){ confirmTid = null; renderRoster(); }
   else if(ds.delyes){
@@ -566,6 +617,19 @@ $('#roster').addEventListener('click', e=>{
     editingTid = confirmTid = null; save(); render();
   }
 });
+$('#roster').addEventListener('input', e=>{
+  const k = e.target.dataset.hsl; if(!k) return;
+  const wrap = e.target.closest('.hsl'), t = T(wrap.dataset.for);
+  const v = n => Number(wrap.querySelector(`[data-hsl="${n}"]`).value);
+  const h = v('h'), s = v('s'), l = v('l'), hex = hslToHex(h,s,l), tr = hslTracks(h,s,l);
+  wrap.querySelectorAll('[data-hsl]').forEach(i => i.style.background = tr[i.dataset.hsl]);
+  wrap.querySelector('.hslprev .dot').style.background = hex;
+  wrap.querySelector('.hslprev code').textContent = hex;
+  const li = wrap.closest('li'); li.querySelector('.trow .dot').style.background = hex;
+  li.querySelectorAll('.sw').forEach(b => b.setAttribute('aria-pressed', b.dataset.color===hex));
+  t.color = hex; renderSummary(); renderBoard(); renderList();
+});
+$('#roster').addEventListener('change', e=>{ if(e.target.dataset.hsl) save(); });
 $('#roster').addEventListener('keydown', e=>{
   if(e.key==='Enter' && e.target.id && e.target.id.startsWith('en-')){ e.preventDefault(); $(`[data-savet="${e.target.id.slice(3)}"]`)?.click(); }
 });
@@ -578,20 +642,46 @@ $('#boardwrap').addEventListener('click', e=>{
     const [lo] = range();
     const y = e.clientY - col.getBoundingClientRect().top;
     const m = lo + Math.floor(y/SLOT_PX*SLOT/30)*30;
-    openModal({tid:col.dataset.col, start:fromMin(m)});
+    openModal({tid:col.dataset.col, start:fromMin(Math.min(m, toMin(LAST_START)))});
   }
 });
 $('#list').addEventListener('click', e=>{ const b=e.target.closest('[data-ap]'); if(b) openModal({id:b.dataset.ap}); });
 
 $('#btnAgendar').addEventListener('click', ()=>{ if(activeList().length) openModal({}); });
 $('#fTher').addEventListener('change', updatePreview);
+function fillOpts(sel, vals){ sel.innerHTML = vals.map(v=>`<option value="${v}">${v}</option>`).join(''); }
+fillOpts($('#fHour'), Array.from({length:11}, (_,i)=>pad(10+i)));
+fillOpts($('#fMin'), Array.from({length:12}, (_,i)=>pad(i*5)));
+function ensureOpt(sel, v){
+  if([...sel.options].some(o=>o.value===v)) return;
+  const o = new Option(v, v), after = [...sel.options].find(x=>x.value > v);
+  sel.insertBefore(o, after || null);
+}
+function setStart(v){
+  const [h, m] = v.split(':');
+  ensureOpt($('#fHour'), h); ensureOpt($('#fMin'), m);
+  $('#fHour').value = h; $('#fMin').value = m; $('#fStart').value = v;
+}
+['#fHour','#fMin'].forEach(id => $(id).addEventListener('change', ()=>{ $('#fStart').value = $('#fHour').value + ':' + $('#fMin').value; updatePreview(); }));
 $('#fStart').addEventListener('input', updatePreview);
 $('#fReq').addEventListener('change', updatePreview);
 document.querySelectorAll('input[name=dur]').forEach(r=>r.addEventListener('change', updatePreview));
-$('#quick').addEventListener('click', e=>{ const b=e.target.closest('[data-q]'); if(b){ $('#fStart').value=b.dataset.q; updatePreview(); }});
 $('#btnCancel').addEventListener('click', closeModal);
 $('#overlay').addEventListener('mousedown', e=>{ if(e.target.id==='overlay') closeModal(); });
 document.addEventListener('keydown', e=>{ if(e.key==='Escape' && !$('#overlay').hidden) closeModal(); });
+function setFull(on){
+  $('#boardshell').classList.toggle('max', on);
+  document.body.classList.toggle('noscroll', on);
+  $('#btnFull').textContent = on ? '✕ Salir de pantalla completa' : '⛶ Pantalla completa';
+  try{
+    if(on && !document.fullscreenElement && document.documentElement.requestFullscreen) document.documentElement.requestFullscreen().catch(()=>{});
+    if(!on && document.fullscreenElement) document.exitFullscreen().catch(()=>{});
+  }catch(_){}
+}
+$('#btnFull').addEventListener('click', ()=> setFull(!$('#boardshell').classList.contains('max')));
+$('#fsAgendar').addEventListener('click', ()=> $('#btnAgendar').click());
+document.addEventListener('fullscreenchange', ()=>{ if(!document.fullscreenElement && $('#boardshell').classList.contains('max')) setFull(false); });
+window.addEventListener('keydown', e=>{ if(e.key==='Escape' && $('#overlay').hidden && $('#boardshell').classList.contains('max')) setFull(false); }, true);
 $('#btnUndo').addEventListener('click', undo);
 $('#btnRedo').addEventListener('click', redo);
 document.addEventListener('keydown', e=>{
@@ -605,9 +695,9 @@ document.addEventListener('keydown', e=>{
 $('#apForm').addEventListener('submit', e=>{
   e.preventDefault();
   const tid = $('#fTher').value, start = $('#fStart').value, dur = currentDur();
-  if(!start){ $('#fStart').focus(); return; }
+  if(!start){ $('#fHour').focus(); return; }
   const s = toMin(start);
-  if(conflictFor(tid, s, s+dur, modal.id)) return;
+  if(s > toMin(LAST_START) || conflictFor(tid, s, s+dur, modal.id)) return;
   const data = {tid, start, dur, client: $('#fClient').value.trim(), req: $('#fReq').checked};
   if(modal.id) Object.assign(D().appts.find(a=>a.id===modal.id), data);
   else D().appts.push({id:uid(), ...data});
@@ -638,8 +728,6 @@ $('#today').addEventListener('click', ()=>{ day = iso(new Date()); render(); });
 $('#dateLbl').addEventListener('click', ()=>{ const p=$('#datePick'); try{ p.showPicker(); }catch(_){ p.style.cssText='position:static;opacity:1;width:auto;height:auto'; p.focus(); } });
 $('#datePick').addEventListener('change', e=>{ if(e.target.value){ day = e.target.value; render(); } });
 
-$('#openAt').addEventListener('change', e=>{ if(e.target.value){ S.open = e.target.value; save(); render(); }});
-$('#closeAt').addEventListener('change', e=>{ if(e.target.value){ S.close = e.target.value; save(); render(); }});
 
 $('#clearSample').addEventListener('click', ()=>{
   S = {sample:false, open:S.open, close:S.close, therapists:[], days:{}}; save(); render(); $('#newName').focus();
@@ -676,7 +764,6 @@ function merge(p){
   if(S.sample) S = {sample:false, open:S.open, close:S.close, therapists:[], days:{}};
   p.therapists.forEach(t=>{ const e=T(t.id); if(e){ e.name=t.name; e.color=t.color; } else S.therapists.push({id:t.id,name:t.name,color:t.color}); });
   Object.entries(p.days).forEach(([k,v])=>{ S.days[k] = {active:v.active||[], appts:v.appts||[]}; });
-  if(p.open) S.open = p.open; if(p.close) S.close = p.close;
   save(); render();
 }
 let pending = null;
