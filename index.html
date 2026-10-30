@@ -42,6 +42,13 @@ button{cursor:pointer}
 
 /* Header */
 .top{display:flex;flex-wrap:wrap;align-items:center;gap:12px 20px;padding-block:20px 16px}
+.sidebtn{width:42px;height:42px;display:grid;place-items:center;border:1px solid var(--line);background:var(--surface);border-radius:11px;color:var(--accent);padding:0;flex:none}
+.sidebtn:hover{background:var(--surface-2)}
+.sidebtn svg{width:24px;height:24px}
+.sidebtn .pane{transition:opacity .15s}
+.sidebtn[aria-expanded="false"] .pane{opacity:0}
+.layout.collapsed{grid-template-columns:minmax(0,1fr)}
+.layout.collapsed > #sidebar{display:none}
 .brand{display:flex;flex-direction:column;margin-right:auto}
 .brand h1{font-family:var(--display);font-weight:400;font-size:28px;letter-spacing:.01em;margin:0;line-height:1.1}
 .brand span{color:var(--muted);font-size:13px}
@@ -203,6 +210,13 @@ td.num{font-variant-numeric:tabular-nums}
 <body>
 <div class="wrap">
   <header class="top">
+    <button class="sidebtn" id="btnSide" type="button" aria-controls="sidebar" aria-expanded="true" title="Ocultar masajistas">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
+        <rect x="2.5" y="4" width="19" height="16" rx="3"/>
+        <path d="M9 4v16"/>
+        <path class="pane" d="M5 8h1.5M5 11h1.5M5 14h1.5"/>
+      </svg>
+    </button>
     <div class="brand">
       <h1>Agenda de masajes</h1>
       <span>Turnos de 60, 90 y 120 min</span>
@@ -221,10 +235,6 @@ td.num{font-variant-numeric:tabular-nums}
     <button class="btn primary agendar" id="btnAgendar">Agendar</button>
   </header>
 
-  <div class="banner" id="sampleBanner" hidden>
-    <span>Estás viendo datos de ejemplo para que veas cómo funciona.</span>
-    <button class="btn small" id="clearSample">Empezar en blanco</button>
-  </div>
   <div class="banner import" id="importBanner" hidden>
     <span id="importTxt"></span>
     <button class="btn small primary" id="impYes">Cargar en este dispositivo</button>
@@ -232,7 +242,7 @@ td.num{font-variant-numeric:tabular-nums}
   </div>
 
   <div class="layout">
-    <aside class="panel">
+    <aside class="panel" id="sidebar">
       <h2>Masajistas</h2>
       <p class="hint">Marca quién trabaja este día. La planilla crece con cada una.</p>
       <form class="addform" id="addForm">
@@ -342,22 +352,7 @@ const fromMin = m => pad(Math.floor(m/60)%24)+':'+pad(m%60);
 const iso = d => d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
 const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
-function seed(){
-  const ids = ['a','b','c','d'];
-  const names = ['Ana','Carla','Sofía','Valentina'];
-  const t = ids.map((id,i)=>({id, name:names[i], color:PASTELS[[0,5,3,6][i]]}));
-  const today = iso(new Date());
-  return {
-    sample:true, open:'09:00', close:'21:00', therapists:t,
-    days:{[today]:{active:['a','b','c'], appts:[
-      {id:uid(), tid:'a', start:'10:30', dur:60, client:'María (ejemplo)', req:true},
-      {id:uid(), tid:'a', start:'11:30', dur:90, client:'Laura (ejemplo)'},
-      {id:uid(), tid:'b', start:'10:30', dur:120, client:'Pareja (ejemplo)', req:true},
-      {id:uid(), tid:'c', start:'13:00', dur:60, client:'Rosa (ejemplo)'},
-      {id:uid(), tid:'c', start:'15:00', dur:90, client:''}
-    ]}}
-  };
-}
+function seed(){ return {sample:false, open:OPEN, close:CLOSE, therapists:[], days:{}}; }
 function load(){ try{ const r = localStorage.getItem(KEY); return r ? JSON.parse(r) : null; }catch(e){ return null; } }
 function persist(j){ try{ localStorage.setItem(KEY, j); }catch(e){} }
 const undoStack = [], redoStack = [];
@@ -374,7 +369,22 @@ function updateUndoBtns(){ $('#btnUndo').disabled = !undoStack.length; $('#btnRe
 
 let S = load() || seed();
 S.open = OPEN; S.close = CLOSE; // horario fijo de la sala
+if(S.sample) removeSample();
+function removeSample(){
+  // Quita las citas y masajistas de ejemplo que trajo la primera versión, sin tocar datos reales.
+  const SAMPLE = {a:'Ana', b:'Carla', c:'Sofía', d:'Valentina'};
+  const sofia = S.therapists.find(t=>t.id==='c' && t.name==='Sofía');
+  Object.values(S.days).forEach(d=>{
+    d.appts = d.appts.filter(a => !/\(ejemplo\)$/.test(a.client||'') && !(sofia && a.tid==='c' && a.start==='15:00' && a.dur===90 && !a.client));
+  });
+  const used = id => Object.values(S.days).some(d=>d.appts.some(a=>a.tid===id));
+  S.therapists = S.therapists.filter(t => !(SAMPLE[t.id]===t.name && !used(t.id)));
+  const ids = new Set(S.therapists.map(t=>t.id));
+  Object.values(S.days).forEach(d=>{ d.active = d.active.filter(id=>ids.has(id)); });
+  S.sample = false;
+}
 let lastSaved = JSON.stringify(S);
+persist(lastSaved);
 let day = iso(new Date());
 let editOrig = null;
 let editingTid = null, confirmTid = null, roMsg = '';
@@ -396,7 +406,6 @@ function render(){
   const dl = new Intl.DateTimeFormat('es',{weekday:'long',day:'numeric',month:'long'}).format(d);
   $('#dateLbl').textContent = $('#bDate').textContent = dl.charAt(0).toUpperCase() + dl.slice(1);
   $('#datePick').value = day;
-  $('#sampleBanner').hidden = !S.sample;
   $('#btnAgendar').disabled = activeList().length === 0;
   $('#btnAgendar').title = activeList().length ? '' : 'Primero marca las masajistas del día';
   renderRoster(); renderSummary(); renderBoard(); renderList(); updateUndoBtns();
@@ -481,7 +490,7 @@ function range(){
 function renderBoard(){
   const wrap = $('#boardwrap'); const act = activeList();
   if(!act.length){
-    wrap.innerHTML = `<div class="empty"><strong>Planilla vacía</strong>Marca en la lista de la izquierda las masajistas que trabajan este día.<br>Aparecerá una columna por cada una.</div>`;
+    wrap.innerHTML = `<div class="empty"><strong>Planilla vacía</strong>Marca en el panel de masajistas quién trabaja este día. Aparecerá una columna por cada una.<br>Si el panel está oculto, ábrelo con el botón de arriba a la izquierda.</div>`;
     return;
   }
   const [lo, hi] = range();
@@ -681,6 +690,16 @@ function setFull(on){
 }
 $('#btnFull').addEventListener('click', ()=> setFull(!$('#boardshell').classList.contains('max')));
 $('#fsAgendar').addEventListener('click', ()=> $('#btnAgendar').click());
+const SIDE_KEY = 'agenda-masajes-sidebar';
+function setSidebar(open){
+  $('.layout').classList.toggle('collapsed', !open);
+  const b = $('#btnSide'); b.setAttribute('aria-expanded', open);
+  b.title = open ? 'Ocultar masajistas' : 'Mostrar masajistas';
+  b.setAttribute('aria-label', b.title);
+  try{ localStorage.setItem(SIDE_KEY, open ? '1' : '0'); }catch(_){}
+}
+$('#btnSide').addEventListener('click', ()=> setSidebar($('.layout').classList.contains('collapsed')));
+(()=>{ let open = true; try{ open = localStorage.getItem(SIDE_KEY) !== '0'; }catch(_){} setSidebar(open); })();
 $('#btnUndo').addEventListener('click', undo);
 $('#btnRedo').addEventListener('click', redo);
 document.addEventListener('keydown', e=>{
@@ -728,10 +747,6 @@ $('#dateLbl').addEventListener('click', ()=>{ const p=$('#datePick'); try{ p.sho
 $('#datePick').addEventListener('change', e=>{ if(e.target.value){ day = e.target.value; render(); } });
 
 
-$('#clearSample').addEventListener('click', ()=>{
-  S = {sample:false, open:S.open, close:S.close, therapists:[], days:{}}; save(); render(); $('#newName').focus();
-});
-// Adding real data turns off the sample banner only when the user clears it explicitly.
 
 /* ---------- Compartir / respaldo ---------- */
 const b64u = u8 => { let s=''; for(let i=0;i<u8.length;i+=0x8000) s+=String.fromCharCode.apply(null,u8.subarray(i,i+0x8000)); return btoa(s).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,''); };
