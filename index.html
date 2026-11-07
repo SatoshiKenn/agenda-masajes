@@ -168,6 +168,9 @@ table{border-collapse:collapse;width:100%;font-size:14px}
 th,td{padding:10px 12px;text-align:left;border-bottom:1px solid var(--line-soft);white-space:nowrap}
 th{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:700}
 tr:last-child td{border-bottom:0}
+tfoot td{border-top:1px solid var(--line);border-bottom:0;background:var(--surface-2,rgba(0,0,0,.025));font-size:13px}
+tfoot .tot{font-family:var(--display);font-size:16px;color:var(--ink)}
+tfoot .brk{color:var(--muted);margin-left:10px}
 td.num{font-variant-numeric:tabular-nums}
 .pill{display:inline-flex;align-items:center;gap:6px;padding:3px 10px 3px 6px;border-radius:999px;color:var(--block-ink);font-weight:600;font-size:13px}
 
@@ -553,7 +556,12 @@ function renderList(){
       <td>${a.client?esc(a.client):'<span style="color:var(--muted)">—</span>'}</td>
       <td>${a.req?'<b>Sí</b>':'<span style="color:var(--muted)">No</span>'}</td>
       <td style="text-align:right"><button class="btn small" data-ap="${a.id}">Editar</button></td></tr>`;}).join('')
-  }</tbody></table>`;
+  }</tbody><tfoot><tr><td colspan="7">${listTotal(aps)}</td></tr></tfoot></table>`;
+}
+function listTotal(aps){
+  const mins = aps.reduce((s,a)=>s+a.dur,0), rq = aps.filter(a=>a.req).length;
+  const brk = [60,90,120].map(d=>[d, aps.filter(a=>a.dur===d).length]).filter(x=>x[1]).map(([d,n])=>`${n} × ${d} min`).join(' · ');
+  return `<b class="tot">Total: ${aps.length} masaje${aps.length===1?'':'s'}</b><span class="brk">${fmtDur(mins)}${rq?` · ${rq} request`:''} · ${brk}</span>`;
 }
 
 /* ---------- Modal ---------- */
