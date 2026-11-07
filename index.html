@@ -12,7 +12,7 @@
   --bg:#F4F6F3; --surface:#FFFFFF; --surface-2:#EEF2EE; --ink:#28302D; --muted:#66716C;
   --line:#DDE3DE; --line-soft:#EAEEEA; --accent:#3F6B5E; --accent-ink:#FFFFFF; --accent-soft:#DCEAE4;
   --danger:#A8443C; --danger-soft:#F6E1DE; --warn-soft:#FBF0D6; --warn-ink:#6E5316;
-  --block-ink:#26302C; --now:#C0564B; --shadow:0 1px 2px rgba(30,45,40,.06),0 6px 24px rgba(30,45,40,.07);
+  --hatch:rgba(40,48,45,.09); --block-ink:#26302C; --now:#C0564B; --shadow:0 1px 2px rgba(30,45,40,.06),0 6px 24px rgba(30,45,40,.07);
   --display:"Marcellus",Georgia,"Times New Roman",serif;
   --body:"Figtree",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
 }
@@ -22,7 +22,7 @@
     --bg:#151A18; --surface:#1D2321; --surface-2:#232B28; --ink:#E6ECE9; --muted:#9BA6A1;
     --line:#323B37; --line-soft:#29312E; --accent:#8CC2B0; --accent-ink:#10201A; --accent-soft:#24362F;
     --danger:#E88E84; --danger-soft:#3A2522; --warn-soft:#3A3120; --warn-ink:#F0D48E;
-    --now:#EE8B7F; --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 24px rgba(0,0,0,.25);
+    --now:#EE8B7F; --hatch:rgba(230,236,233,.08); --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 24px rgba(0,0,0,.25);
   }
 }
 :root[data-theme="dark"]{
@@ -30,7 +30,7 @@
   --bg:#151A18; --surface:#1D2321; --surface-2:#232B28; --ink:#E6ECE9; --muted:#9BA6A1;
   --line:#323B37; --line-soft:#29312E; --accent:#8CC2B0; --accent-ink:#10201A; --accent-soft:#24362F;
   --danger:#E88E84; --danger-soft:#3A2522; --warn-soft:#3A3120; --warn-ink:#F0D48E;
-  --now:#EE8B7F; --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 24px rgba(0,0,0,.25);
+  --now:#EE8B7F; --hatch:rgba(230,236,233,.08); --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 24px rgba(0,0,0,.25);
 }
 *{box-sizing:border-box}
 [hidden]{display:none!important}
@@ -140,6 +140,11 @@ input[type=text]:focus,input[type=time]:focus,select:focus{border-color:var(--ac
 .ap .t .d{font-weight:500}
 .ap .c{font-size:15px;font-weight:600;line-height:1.25;overflow:hidden;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;word-break:break-word}
 .ap .d{font-size:11px;opacity:.7}
+.away{position:absolute;left:0;right:0;top:0;background:repeating-linear-gradient(135deg,var(--hatch) 0 7px,transparent 7px 14px);border-bottom:1px dashed var(--line);display:flex;align-items:flex-end;justify-content:center;padding-bottom:4px}
+.away span{font-size:11px;font-weight:600;color:var(--muted);background:var(--surface);border-radius:6px;padding:1px 6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.arrive{display:flex;flex-direction:column;gap:6px}
+.arrive .timepick{display:flex;align-items:center;gap:4px}
+.arrive select{font-variant-numeric:tabular-nums;font-weight:600}
 .nowline{position:absolute;left:0;right:0;height:2px;background:var(--now);z-index:1;pointer-events:none}
 .nowline::before{content:"";position:absolute;left:-4px;top:-3px;width:8px;height:8px;border-radius:50%;background:var(--now)}
 .boardshell{display:flex;flex-direction:column;gap:8px}
@@ -392,6 +397,7 @@ let modal = null; // {id|null}
 
 const D = () => (S.days[day] ||= {active:[], appts:[]});
 const T = id => S.therapists.find(t => t.id === id);
+const arrivalOf = tid => (D().arrive && D().arrive[tid]) || OPEN;
 const activeList = () => D().active.map(T).filter(Boolean);
 const endOf = a => toMin(a.start) + a.dur;
 
@@ -427,6 +433,13 @@ function renderRoster(){
       const total = Object.values(S.days).reduce((s,dd)=>s+dd.appts.filter(a=>a.tid===t.id).length,0);
       html += `<div class="tedit">
         <input type="text" id="en-${t.id}" value="${esc(t.name)}" maxlength="30" aria-label="Nombre">
+        <div class="arrive">
+          <span class="label">Llegada este día</span>
+          <div class="timepick">${(()=>{ const [ah,am]=arrivalOf(t.id).split(':');
+            const hs=Array.from({length:11},(_,i)=>pad(10+i)), ms=Array.from({length:12},(_,i)=>pad(i*5));
+            const opt=(v,sel)=>`<option value="${v}" ${v===sel?'selected':''}>${v}</option>`;
+            return `<select data-arr="${t.id}" data-part="h" aria-label="Hora de llegada">${hs.map(v=>opt(v,ah)).join('')}</select><span>:</span><select data-arr="${t.id}" data-part="m" aria-label="Minutos de llegada">${ms.map(v=>opt(v,am)).join('')}</select><span class="hrs">hrs</span>`; })()}</div>
+        </div>
         <div class="swatches">${PASTELS.map(c=>`<button type="button" class="sw" style="background:${c}" data-color="${c}" data-for="${t.id}" aria-label="Color ${c}" aria-pressed="${c===t.color}"></button>`).join('')}</div>
         ${hslBlock(t)}
         ${confirmTid===t.id ? `<div class="confirm"><span>¿Eliminar a ${esc(t.name)}?${total?` Se borrarán sus ${total} cita${total>1?'s':''}.`:''}</span>
@@ -513,6 +526,8 @@ function renderBoard(){
   const showNow = day === iso(now) && nowM >= lo && nowM <= hi;
   act.forEach(t=>{
     html += `<div class="col" data-col="${t.id}" style="height:${h}px;background-image:${grid};background-position:0 0, 0 ${lo%60 ? SLOT_PX : 0}px" title="Clic para agendar con ${esc(t.name)}">`;
+    const arr = toMin(arrivalOf(t.id));
+    if(arr > lo) html += `<div class="away" style="height:${(arr-lo)/SLOT*SLOT_PX}px" title="${esc(t.name)} llega a las ${fromMin(arr)}"><span>Llega ${fromMin(arr)}</span></div>`;
     if(showNow) html += `<div class="nowline" style="top:${(nowM-lo)/SLOT*SLOT_PX}px"></div>`;
     D().appts.filter(a=>a.tid===t.id).forEach(a=>{
       const top = (toMin(a.start)-lo)/SLOT*SLOT_PX + 2;
@@ -567,7 +582,7 @@ function closeModal(){ $('#overlay').hidden = true; modal = null; }
 
 function suggestStart(tid){
   const ends = D().appts.filter(a=>a.tid===tid).map(endOf);
-  const base = ends.length ? Math.max(...ends) : toMin(S.open);
+  const base = Math.max(toMin(arrivalOf(tid)), ...ends);
   return fromMin(base);
 }
 function currentDur(){ return Number(document.querySelector('input[name=dur]:checked').value); }
@@ -581,12 +596,13 @@ function updatePreview(){
   res.style.background = t.color; res.style.color = '';
   const s = toMin(st), e = s + dur;
   res.innerHTML = `<div><div class="big">${st} → ${fromMin(e)}</div><div class="sub">${esc(t.name)} · ${DUR_LABEL[dur]}${$('#fReq').checked?' · Request':''}${e>=1440?' · termina al día siguiente':''}</div></div>`;
-  const c = conflictFor(tid, s, e, modal && modal.id), late = s > toMin(LAST_START);
-  if(late){ msg.hidden = false; msg.textContent = `La última hora para agendar es a las ${LAST_START}. Elige una hora más temprana.`; }
+  const c = conflictFor(tid, s, e, modal && modal.id), late = s > toMin(LAST_START), early = s < toMin(arrivalOf(tid));
+  if(early){ msg.hidden = false; msg.textContent = `${t.name} llega a las ${arrivalOf(tid)} este día. Elige una hora desde su llegada o cambia la llegada en Editar.`; }
+  else if(late){ msg.hidden = false; msg.textContent = `La última hora para agendar es a las ${LAST_START}. Elige una hora más temprana.`; }
   else if(c){ msg.hidden = false; msg.textContent = `Se cruza con otra cita de ${t.name} (${c.start} – ${fromMin(endOf(c))}). Cambia la hora, la duración o la masajista.`; }
   else if(e > toMin(S.close)){ msg.hidden = false; msg.textContent = `Termina después del cierre (${S.close}). Puedes guardarla igual.`; }
   else msg.hidden = true;
-  $('#btnSave').disabled = !!c || late;
+  $('#btnSave').disabled = !!c || late || early;
 }
 
 /* ---------- Events ---------- */
@@ -614,10 +630,10 @@ $('#roster').addEventListener('change', e=>{
 $('#roster').addEventListener('click', e=>{
   const b = e.target.closest('button'); if(!b) return;
   const ds = b.dataset;
-  if(ds.edit){ editingTid = editingTid===ds.edit ? null : ds.edit; editOrig = editingTid ? T(editingTid).color : null; confirmTid = null; roMsg=''; renderRoster(); if(editingTid) $('#en-'+editingTid).focus(); }
+  if(ds.edit){ editingTid = editingTid===ds.edit ? null : ds.edit; editOrig = editingTid ? {color:T(editingTid).color, arr:arrivalOf(editingTid)} : null; confirmTid = null; roMsg=''; renderRoster(); if(editingTid) $('#en-'+editingTid).focus(); }
   else if(ds.color){ const t=T(ds.for); t.color = ds.color; save(); render(); }
   else if(ds.savet){ const t=T(ds.savet); const v=$('#en-'+t.id).value.trim(); if(v) t.name=v; editingTid=null; save(); render(); }
-  else if(ds.canct){ const t=T(ds.canct); editingTid = null; if(editOrig && t.color!==editOrig){ t.color = editOrig; save(); render(); } else renderRoster(); }
+  else if(ds.canct){ const t=T(ds.canct); editingTid = null; if(editOrig && (t.color!==editOrig.color || arrivalOf(t.id)!==editOrig.arr)){ t.color = editOrig.color; setArrival(t.id, editOrig.arr); save(); render(); } else renderRoster(); }
   else if(ds.delt){ confirmTid = ds.delt; renderRoster(); }
   else if(ds.delno){ confirmTid = null; renderRoster(); }
   else if(ds.delyes){
@@ -639,7 +655,16 @@ $('#roster').addEventListener('input', e=>{
   li.querySelectorAll('.sw').forEach(b => b.setAttribute('aria-pressed', b.dataset.color===hex));
   t.color = hex; renderSummary(); renderBoard(); renderList();
 });
-$('#roster').addEventListener('change', e=>{ if(e.target.dataset.hsl) save(); });
+$('#roster').addEventListener('change', e=>{
+  if(e.target.dataset.hsl) save();
+  const tid = e.target.dataset.arr; if(!tid) return;
+  const g = part => $(`[data-arr="${tid}"][data-part="${part}"]`).value;
+  setArrival(tid, g('h') + ':' + g('m')); save(); renderBoard();
+});
+function setArrival(tid, v){
+  const d = D(); d.arrive ||= {};
+  if(v === OPEN) delete d.arrive[tid]; else d.arrive[tid] = v;
+}
 $('#roster').addEventListener('keydown', e=>{
   if(e.key==='Enter' && e.target.id && e.target.id.startsWith('en-')){ e.preventDefault(); $(`[data-savet="${e.target.id.slice(3)}"]`)?.click(); }
 });
@@ -652,7 +677,7 @@ $('#boardwrap').addEventListener('click', e=>{
     const [lo] = range();
     const y = e.clientY - col.getBoundingClientRect().top;
     const m = lo + Math.floor(y/SLOT_PX*SLOT/30)*30;
-    openModal({tid:col.dataset.col, start:fromMin(Math.min(m, toMin(LAST_START)))});
+    openModal({tid:col.dataset.col, start:fromMin(Math.min(Math.max(m, toMin(arrivalOf(col.dataset.col))), toMin(LAST_START)))});
   }
 });
 $('#list').addEventListener('click', e=>{ const b=e.target.closest('[data-ap]'); if(b) openModal({id:b.dataset.ap}); });
@@ -715,7 +740,7 @@ $('#apForm').addEventListener('submit', e=>{
   const tid = $('#fTher').value, start = $('#fStart').value, dur = currentDur();
   if(!start){ $('#fHour').focus(); return; }
   const s = toMin(start);
-  if(s > toMin(LAST_START) || conflictFor(tid, s, s+dur, modal.id)) return;
+  if(s > toMin(LAST_START) || s < toMin(arrivalOf(tid)) || conflictFor(tid, s, s+dur, modal.id)) return;
   const data = {tid, start, dur, client: $('#fClient').value.trim(), req: $('#fReq').checked};
   if(modal.id) Object.assign(D().appts.find(a=>a.id===modal.id), data);
   else D().appts.push({id:uid(), ...data});
@@ -777,7 +802,7 @@ function countAppts(p){ return Object.values(p.days).reduce((n,d)=>n+(d.appts?d.
 function merge(p){
   if(S.sample) S = {sample:false, open:S.open, close:S.close, therapists:[], days:{}};
   p.therapists.forEach(t=>{ const e=T(t.id); if(e){ e.name=t.name; e.color=t.color; } else S.therapists.push({id:t.id,name:t.name,color:t.color}); });
-  Object.entries(p.days).forEach(([k,v])=>{ S.days[k] = {active:v.active||[], appts:v.appts||[]}; });
+  Object.entries(p.days).forEach(([k,v])=>{ S.days[k] = {active:v.active||[], appts:v.appts||[], arrive:v.arrive||{}}; });
   save(); render();
 }
 let pending = null;
